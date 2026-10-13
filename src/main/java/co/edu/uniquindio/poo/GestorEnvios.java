@@ -75,6 +75,10 @@ public class GestorEnvios {
     }
 
 
+
+
+
+
     public Map<String, List<Paquete>> getPaquetesPorMunicipio() {
     Map<String, List<Paquete>> resultado = new HashMap<>();
 
@@ -91,6 +95,8 @@ public class GestorEnvios {
 
     return resultado;
 }
+
+
 
 
 public List<Paquete> getPaquetesDeMunicipio(String municipio) {
@@ -222,5 +228,56 @@ public void registrarEntrega(String codigo) {
     public List<Repartidor> getRepartidores() {
         return new ArrayList<>(repartidores.values());
     }
-}
 
+
+
+
+        public static double pesoTotalMunicipio(List<Paquete> paquetes, String municipio) {
+        if (paquetes == null || municipio == null) {
+            throw new IllegalArgumentException("Los parámetros no pueden ser nulos.");
+        }
+        return pesoTotalMunicipio(paquetes, municipio.trim(), 0);
+    }
+ 
+    private static double pesoTotalMunicipio(List<Paquete> paquetes, String municipio, int indice) {
+        if (indice == paquetes.size()) {               
+            return 0;
+        }
+        Paquete p = paquetes.get(indice);
+        double aporte = p.getDestino().equalsIgnoreCase(municipio) ? p.getPeso() : 0;
+        return aporte + pesoTotalMunicipio(paquetes, municipio, indice + 1);  
+    }
+
+     public static int contarPrioridadMinima(List<Paquete> paquetes, int minima) {
+        if (paquetes == null) {
+            throw new IllegalArgumentException("La lista no puede ser nula.");
+        }
+        return contarPrioridadMinima(paquetes, minima, 0);
+    }
+ 
+    private static int contarPrioridadMinima(List<Paquete> paquetes, int minima, int indice) {
+        if (indice == paquetes.size()) {                
+            return 0;
+        }
+        int actual = paquetes.get(indice).getPrioridad() >= minima ? 1 : 0;
+        return actual + contarPrioridadMinima(paquetes, minima, indice + 1);   
+    }
+    
+    
+    public static Paquete mayorPeso(List<Paquete> paquetes) {
+        if (paquetes == null || paquetes.isEmpty()) {
+            throw new IllegalArgumentException("La lista no puede ser nula ni vacía.");
+        }
+        return mayorPeso(paquetes, 0, paquetes.size() - 1);
+    }
+ 
+    private static Paquete mayorPeso(List<Paquete> paquetes, int inicio, int fin) {
+        if (inicio == fin) {                              
+            return paquetes.get(inicio);
+        }
+        int medio = inicio + (fin - inicio) / 2;          
+        Paquete izquierdo = mayorPeso(paquetes, inicio, medio);       
+        Paquete derecho = mayorPeso(paquetes, medio + 1, fin);        
+        return izquierdo.getPeso() >= derecho.getPeso() ? izquierdo : derecho;   // combinación
+}
+} 
