@@ -1,0 +1,15 @@
+# Carpetas de compilación
+target/
+bin/
+build/
+
+# Archivos compilados individuales
+*.class
+
+# Archivos de configuración de IDEs (VS Code, Eclipse, IntelliJ)
+.vscode/
+.idea/
+*.iml
+.classpath
+.project
+.settings/
