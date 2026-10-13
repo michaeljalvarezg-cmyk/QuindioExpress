@@ -1,24 +1,232 @@
 package co.edu.uniquindio.poo;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
+import java.util.Queue;
+import java.util.Set;
+import java.util.TreeSet;
+
+
+
 
 public class GestorEnvios {
     private Map<String, Repartidor> repartidores;
     private List<Paquete> paquetesRegistrados;
     private Map<String, Paquete> paquetesRegistradoscodigo;
-    private PriorityQueue<Paquete> pendientesDespacho;
+    private PriorityQueue<Paquete> pendientesDespachoPrioridad;
+    private Queue<Paquete> pendientesPorLlegada;
     private ContratoMiLista<Paquete> historialDespachos;
 
     public GestorEnvios(){
         this.repartidores = new HashMap<>();
         this.paquetesRegistrados = new ArrayList<>();
         this.paquetesRegistradoscodigo = new HashMap<>();
-        this.pendientesDespacho = new PriorityQueue<>();
+        this.pendientesDespachoPrioridad = new PriorityQueue<>(Comparadores.DESPACHO);
         this.historialDespachos = new ListaEnlazada<Paquete>();
+        this.pendientesPorLlegada = new ArrayDeque<>();
     }
 
+     public void registrarPaquete(Paquete p) {
+        if (p == null) {
+            throw new IllegalArgumentException("El paquete no puede ser nulo.");
+        }
+        if (paquetesRegistradoscodigo.containsKey(p.getCodigo())) {   // O(1) esperado
+            throw new IllegalArgumentException("Ya existe un paquete con el código " + p.getCodigo());
+        }
+        paquetesRegistrados.add(p);                  // O(1) amortizado
+        paquetesRegistradoscodigo.put(p.getCodigo(), p);
+        pendientesDespachoPrioridad.offer(p);                 // O(log n)
+    }
+
+     public void registrarRepartidor(Repartidor r) {
+        if (r == null) {
+            throw new IllegalArgumentException("El repartidor no puede ser nulo.");
+        }
+        if (r.getIdentificacion() == null || r.getIdentificacion().trim().isEmpty()) {
+            throw new IllegalArgumentException("La identificación no puede ser nula ni vacía.");
+        }
+        if (r.getZona() == null || r.getZona().trim().isEmpty()) {
+            throw new IllegalArgumentException("La zona no puede ser nula ni vacía.");
+        }
+        if (repartidores.containsKey(r.getIdentificacion())) {
+            throw new IllegalArgumentException("Ya existe un repartidor con la identificación " + r.getIdentificacion());
+        }
+        repartidores.put(r.getIdentificacion(), r);
+    }
+
+
+    public Paquete consultarPaquete(String codigo) {
+        return paquetesRegistradoscodigo.get(codigo);
+    }
+ 
+    public boolean existePaquete(String codigo) {
+        return paquetesRegistradoscodigo.containsKey(codigo);
+    }
+ 
+    public Repartidor consultarRepartidor(String identificacion) {
+        return repartidores.get(identificacion);
+    }
+
+
+
+
+
+
+    public Map<String, List<Paquete>> getPaquetesPorMunicipio() {
+    Map<String, List<Paquete>> resultado = new HashMap<>();
+
+    for (Paquete p : paquetesRegistrados) {
+        String destino = p.getDestino();
+
+    
+        if (!resultado.containsKey(destino)) {
+            resultado.put(destino, new ArrayList<>());
+        }
+
+        resultado.get(destino).add(p);
+    }
+
+    return resultado;
 }
+
+
+
+
+public List<Paquete> getPaquetesDeMunicipio(String municipio) {
+        List<Paquete> resultado = new ArrayList<>();
+        if (municipio == null) {
+            return resultado;
+        }
+        String buscado = municipio.trim();
+        for (Paquete p : paquetesRegistrados) {
+            if (p.getDestino().equalsIgnoreCase(buscado)) {
+                resultado.add(p);
+            }
+        }
+        return resultado;
+    }
+
+    private Repartidor buscarRepartidorEnZona(String zona) {
+        for (Repartidor r : repartidores.values()) {
+            if (r.isDisponible() == true && r.getZona().trim().equalsIgnoreCase(zona)) {
+                return r;
+            }
+        }
+        return null;
+    }
+
+ private boolean ocuparRepartidor(Paquete paquete) {
+        Repartidor r = buscarRepartidorEnZona(paquete.getDestino());
+        if (r == null) return false;
+        r.setDisponible(false);
+        return true;
+    }
+
+     public Paquete despacharPorPrioridad() {
+        Paquete paquete = pendientesDespachoPrioridad.peek();            
+        if (paquete == null || !ocuparRepartidor(paquete)) {
+            return null;
+        }
+        pendientesDespachoPrioridad.poll();                              
+        pendientesPorLlegada.remove(paquete);                   
+        return paquete;
+    }
+
+       public Paquete despacharPorOrdenLlegada() {
+        Paquete paquete = pendientesPorLlegada.peek();          
+        if (paquete == null || !ocuparRepartidor(paquete)){
+            return null;
+        } 
+
+        pendientesPorLlegada.poll();                            
+        pendientesDespachoPrioridad.remove(paquete);                     
+        return paquete;
+    }
+
+
+    public int getCantidadPorDespachar() {
+        return pendientesDespachoPrioridad.size();
+    }
+
+public void registrarEntrega(String codigo) {
+        Paquete p = paquetesRegistradoscodigo.get(codigo);
+        if (p == null) {
+            throw new IllegalArgumentException("No existe el paquete " + codigo);
+        }
+        if (pendientesDespachoPrioridad.contains(p)) {
+            throw new IllegalStateException("El paquete " + codigo + " aún no ha sido despachado.");
+        }
+        if (estaEntregado(codigo)) {
+            throw new IllegalStateException("El paquete " + codigo + " ya fue entregado.");
+        }
+        Repartidor r = buscarRepartidorEnZona(p.getDestino());
+        if (r == null) {
+            throw new IllegalStateException("No hay repartidores ocupados en la zona " + p.getDestino());
+        }
+        historialDespachos.agregar(p);               
+        r.setDisponible(true);
+    }
+
+
+    private boolean estaEntregado(String codigo) {
+        for (Paquete p : historialDespachos) {
+            if (p.getCodigo().equals(codigo)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public ContratoMiLista<Paquete> getHistorial() {
+        return historialDespachos;
+    }
+
+      public List<Paquete> getPendientes() {
+        Set<String> entregados = new HashSet<>();
+        for (Paquete p : historialDespachos) {
+            entregados.add(p.getCodigo());
+        }
+        List<Paquete> resultado = new ArrayList<>();
+        for (Paquete p : paquetesRegistrados) {
+            if (!entregados.contains(p.getCodigo())) {
+                resultado.add(p);
+            }
+        }
+        return resultado;
+    }
+
+
+
+    public List<Paquete> getOrdenadoPor(Comparator<Paquete> criterio) {
+        List<Paquete> copia = new ArrayList<>(paquetesRegistrados);
+        copia.sort(criterio);
+        return copia;
+    }
+
+    public List<Paquete> getOrdenadoPorCodigo() {
+        List<Paquete> copia = new ArrayList<>(paquetesRegistrados);
+        copia.sort(Comparator.naturalOrder());
+        return copia;
+    }
+
+
+       public List<Paquete> getPaquetesRegistrados() {
+        return new ArrayList<>(paquetesRegistrados);
+    }
+ 
+    public int getTotalPaquetes() {
+        return paquetesRegistrados.size();
+    }
+ 
+    public List<Repartidor> getRepartidores() {
+        return new ArrayList<>(repartidores.values());
+    }
+}
+
