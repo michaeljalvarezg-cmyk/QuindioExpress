@@ -75,10 +75,6 @@ public class GestorEnvios {
     }
 
 
-
-
-
-
     public Map<String, List<Paquete>> getPaquetesPorMunicipio() {
     Map<String, List<Paquete>> resultado = new HashMap<>();
 
@@ -95,8 +91,6 @@ public class GestorEnvios {
 
     return resultado;
 }
-
-
 
 
 public List<Paquete> getPaquetesDeMunicipio(String municipio) {
