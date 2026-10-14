@@ -239,7 +239,12 @@ public class GestorEnvios {
 
     // ================= ALGORITMOS =================
 
+<<<<<<< Updated upstream
     // RA1 - Recursivo: peso total de un municipio. Pila O(n), tiempo O(n)
+=======
+
+
+>>>>>>> Stashed changes
     public static double pesoTotalMunicipio(List<Paquete> paquetes, String municipio) {
         if (paquetes == null || municipio == null) {
             throw new IllegalArgumentException("Los parámetros no pueden ser nulos.");
@@ -256,7 +261,10 @@ public class GestorEnvios {
         return aporte + pesoTotalMunicipio(paquetes, municipio, indice + 1);   // caso recursivo
     }
 
+<<<<<<< Updated upstream
     // RA2 - Recursivo: cuenta paquetes con prioridad >= minima
+=======
+>>>>>>> Stashed changes
     public static int contarPrioridadMinima(List<Paquete> paquetes, int minima) {
         if (paquetes == null) {
             throw new IllegalArgumentException("La lista no puede ser nula.");
