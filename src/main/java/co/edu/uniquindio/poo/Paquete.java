@@ -37,7 +37,7 @@ public class Paquete implements Comparable<Paquete> {
     @Override
     public int compareTo(Paquete otro) {      // orden natural: código ascendente
         return this.codigo.compareTo(otro.codigo);
-    }
+    } 
 
 
     // Se verifica si el objeto es una instacia de paquete, si no lo es, se sabe que no son iguales

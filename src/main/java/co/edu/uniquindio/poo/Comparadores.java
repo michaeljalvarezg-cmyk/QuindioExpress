@@ -13,6 +13,5 @@ public final class Comparadores {
             (a, b) -> Integer.compare(a.getTiempoEstimado(), b.getTiempoEstimado()); // menor a mayor
 
     // Despacho: prioridad, luego tiempo, luego código
-    public static final Comparator<Paquete> DESPACHO =
-            POR_PRIORIDAD.thenComparing(POR_TIEMPO).thenComparing(Comparator.naturalOrder());
+    public static final Comparator<Paquete> DESPACHO = POR_PRIORIDAD.thenComparing(POR_TIEMPO).thenComparing(Comparator.naturalOrder());
 }

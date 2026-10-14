@@ -1,102 +1,85 @@
 package co.edu.uniquindio.poo;
-import java.util.Iterator;
-import java.util.NoSuchElementException; 
 
-public class ListaEnlazada<T> implements ContratoMiLista<T>  {
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+
+public class ListaEnlazada<T> implements ContratoMiLista<T> {
     private Nodo<T> cabeza;
-    private int tamaño;
+    private Nodo<T> cola;
+    private int tamano;
 
     public ListaEnlazada() {
         this.cabeza = null;
-        this.tamaño = 0;
+        this.cola = null;
+        this.tamano = 0;
     }
-    
 
+    // O(1): se enlaza directamente después de la cola
     @Override
     public void agregar(T elemento) {
-        Nodo<T> nuevoNodo = new Nodo<>(elemento);
-
-        if (cabeza==null) {
-            cabeza = nuevoNodo;
+        Nodo<T> nuevo = new Nodo<>(elemento);
+        if (cabeza == null) {
+            cabeza = nuevo;
         } else {
-            // Caso 2: Recorrer hasta encontrar el último nodo
-            Nodo<T> actual = cabeza;
-            while (actual.getSiguiente() != null) {
-                actual = actual.getSiguiente();
-            }
-            // Conectar el último nodo con el nuevo
-            actual.setSiguiente(nuevoNodo);
+            cola.setSiguiente(nuevo);
         }
-
-        // Incrementar el contador de elementos
-        tamaño++;
+        cola = nuevo;
+        tamano++;
     }
 
+    // O(n)
     @Override
     public boolean eliminar(T elemento) {
-        // Caso 1: Si la lista está vacía, no se puede eliminar nada
         if (estaVacia()) {
             return false;
         }
-
-        // Caso 2: Si el elemento a eliminar está en el primer nodo (cabeza)
+        // Primer elemento
         if (cabeza.getValor().equals(elemento)) {
             cabeza = cabeza.getSiguiente();
-            tamaño--;
+            if (cabeza == null) {
+                cola = null;            // la lista quedó vacía
+            }
+            tamano--;
             return true;
         }
-
-        // Caso 3: Buscar en el resto de la lista (medio o final)
+        // Intermedio o último
         Nodo<T> anterior = cabeza;
         Nodo<T> actual = cabeza.getSiguiente();
-
         while (actual != null) {
             if (actual.getValor().equals(elemento)) {
-                // Hacemos el "puente" ignorando a actual
                 anterior.setSiguiente(actual.getSiguiente());
-                tamaño--;
+                if (actual == cola) {
+                    cola = anterior;    // se eliminó el último
+                }
+                tamano--;
                 return true;
             }
-            // Avanzar ambos punteros
             anterior = actual;
             actual = actual.getSiguiente();
         }
-
-        // Si llegó al final y no lo encontró
-        return false;
+        return false;                   // elemento inexistente
     }
-
 
     @Override
     public boolean estaVacia() {
-        if (cabeza == null) {
-            return true;
-        } else {
-            return false;
-        }
+        return tamano == 0;
     }
-
 
     @Override
     public int getTamano() {
-        return tamaño;
+        return tamano;
     }
 
-
+    // O(n)
     @Override
     public T obtener(int indice) {
-        // Validar que el índice exista en la lista
-        if (indice < 0 || indice >= tamaño) {
+        if (indice < 0 || indice >= tamano) {
             throw new IndexOutOfBoundsException("Índice fuera de rango: " + indice);
         }
-
         Nodo<T> actual = cabeza;
-        
-        // Avanzamos 'indice' cantidad de posiciones
         for (int i = 0; i < indice; i++) {
             actual = actual.getSiguiente();
         }
-
         return actual.getValor();
     }
 
@@ -112,14 +95,13 @@ public class ListaEnlazada<T> implements ContratoMiLista<T>  {
 
             @Override
             public T next() {
-                if (hasNext()== false) {
+                if (!hasNext()) {
                     throw new NoSuchElementException("No hay más elementos en la lista.");
                 }
                 T valor = actual.getValor();
                 actual = actual.getSiguiente();
                 return valor;
             }
-        }; 
+        };
     }
 }
-
